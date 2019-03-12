@@ -1,8 +1,9 @@
-/* include <cornucopia/util/math.scad> */
-/* include <cornucopia/util/measures/imperial.scad> */
-/*  */
-/* use <cornucopia/util/constants.scad> */
-/* include <cornucopia/util/constants.scad> */
+include <cornucopia/util/math.scad>
+include <cornucopia/util/measures/imperial.scad>
+
+
+include <cornucopia/util/constants.scad>
+use <cornucopia/util/constants.scad>
 
 // This file is placed under the public domain
 
@@ -71,7 +72,7 @@ module block(width,length,height,axle_hole=false,reinforcement=false, hollow_kno
 				cube([overall_length,overall_width,height*block_height]);
 				// knobs:
 				if (flat_top != true)
-				translate([knob_diameter/2+wall_thickness,knob_diameter/2+wall_thickness,0]) 
+				translate([knob_diameter/2+wall_thickness,knob_diameter/2+wall_thickness,0])
 					for (ycount=[0:width-1])
 						for (xcount=[0:length-1]) {
 							translate([xcount*knob_spacing,ycount*knob_spacing,0])
@@ -92,7 +93,7 @@ module block(width,length,height,axle_hole=false,reinforcement=false, hollow_kno
 					cube([overall_length+wall_thickness,wall_thickness,wall_thickness]);
 				translate([-wall_thickness/2,overall_width-wall_thickness/3,-wall_thickness/2])
 					cube([overall_length+wall_thickness,wall_thickness,wall_thickness]);
-	
+
 				translate([-wall_thickness*2/3,-wall_thickness/2,-wall_thickness/2])
 					cube([wall_thickness,overall_width+wall_thickness,wall_thickness]);
 				translate([overall_length-wall_thickness/3,0,-wall_thickness/2])
@@ -202,4 +203,3 @@ MTH_triangleAreaFromLengths(3, 3, 9);
 /* function gen_facet_series_asdf (r) = [0 : 1.0 / ;get_fragments_from_r (r) : 1.0001]; */
 
 MTH_triangleAreaFromLengths(3, 3, 9);
-

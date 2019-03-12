@@ -30,7 +30,11 @@
   },
   "homepage": "https://github.com/Maxattax97/openscad-format#readme",
   "dependencies": {
+    "clang-format": "^1.2.4",
+    "fs-extra": "^7.0.1",
     "get-stdin": "^6.0.0",
+    "globby": "^9.1.0",
+    "tmp-promise": "^1.0.5",
     "yargs": "^13.2.2"
   },
   "devDependencies": {
