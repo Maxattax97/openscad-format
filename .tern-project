@@ -1,0 +1,19 @@
+{
+    "ecmaVersion": 6,
+    "libs": [],
+    "loadEagerly": [
+        "index.js"
+    ],
+    "dontLoad": [],
+    "plugins": {
+        "requirejs": {
+            "baseURL": "./",
+            "paths": {}
+        },
+        "node": {},
+        "doc_comment": {
+            "fullDocs": true,
+            "strong": true
+        }
+    }
+}

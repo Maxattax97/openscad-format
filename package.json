@@ -1,0 +1,48 @@
+{
+  "name": "openscad-format",
+  "version": "0.0.1",
+  "description": "An opinionated formatter for the OpenSCAD language.",
+  "main": "index.js",
+  "bin": {
+    "openscad-format": "index.js"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "fix": "eslint . --fix",
+    "cmd": "node index.js",
+    "test": "mocha",
+    "demo": "node index.js -i source.scad"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Maxattax97/openscad-format.git"
+  },
+  "keywords": [
+    "openscad",
+    "format",
+    "cad",
+    "3d"
+  ],
+  "author": "Max O'Cull",
+  "license": "GPL-3.0",
+  "bugs": {
+    "url": "https://github.com/Maxattax97/openscad-format/issues"
+  },
+  "homepage": "https://github.com/Maxattax97/openscad-format#readme",
+  "dependencies": {
+    "get-stdin": "^6.0.0",
+    "yargs": "^13.2.2"
+  },
+  "devDependencies": {
+    "chai": "^4.2.0",
+    "eslint": "^5.15.1",
+    "eslint-plugin-import": "^2.16.0",
+    "mocha": "^6.0.2"
+  },
+  "peerDependencies": {
+    "eslint-config-airbnb-base": "^13.1.0"
+  },
+  "engines": {
+    "node": ">=8.0.0"
+  }
+}
