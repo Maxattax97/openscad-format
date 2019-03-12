@@ -2,9 +2,9 @@
   "name": "openscad-format",
   "version": "0.0.3",
   "description": "An opinionated formatter for the OpenSCAD language.",
-  "main": "index.js",
+  "main": "./index.js",
   "bin": {
-    "openscad-format": "index.js"
+    "openscad-format": "./index.js"
   },
   "scripts": {
     "lint": "eslint .",

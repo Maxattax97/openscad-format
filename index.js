@@ -164,7 +164,11 @@ async function main(input, output) {
     argv.output = output;
   }
 
-  argv.input = await globby(input);
+  try {
+    argv.input = await globby(argv.input);
+  } catch (err) {
+    console.error(err, argv.input);
+  }
 
   if (argv.input.length > 1) {
     argv.output = null;
@@ -174,45 +178,50 @@ async function main(input, output) {
 
   const resultList = [];
 
-  const tmpDir = await tmp.dir({ unsafeCleanup: true });
-
   try {
-    await fs.copy('.clang-format', path.join(tmpDir.path, '.clang-format'));
-  } catch (err) {
-    console.error('Failed to copy clang format config file to temporary directory');
-  }
+    const tmpDir = await tmp.dir({ unsafeCleanup: true });
 
-  if (argv.input) {
-    await Promise.all(argv.input.map(async (file) => {
+    try {
+      await fs.copy('.clang-format', path.join(tmpDir.path, '.clang-format'));
+    } catch (err) {
+      console.error('Failed to copy clang format config file to temporary directory');
+    }
+
+    if (argv.input) {
+      await Promise.all(argv.input.map(async (file) => {
+        try {
+          const result = await feed(file, argv.output, tmpDir);
+          resultList.push({ source: file, formatted: result });
+        } catch (err) {
+          console.error(err);
+        }
+      }));
+    } else {
+      // Use stdin.
       try {
-        const result = await feed(file, argv.output, tmpDir);
-        resultList.push({ source: file, formatted: result });
+        const result = await feed(null, argv.output, tmpDir);
+        resultList.push({ source: 'stdin', formatted: result });
       } catch (err) {
         console.error(err);
       }
-    }));
-  } else {
-    // Use stdin.
-    try {
-      const result = await feed(null, argv.output, tmpDir);
-      resultList.push({ source: 'stdin', formatted: result });
-    } catch (err) {
-      console.error(err);
     }
-  }
 
-  try {
-    await fs.remove(path.join(tmpDir.path, '.clang-format'));
-  } catch (err) {
-    console.error('Failed to remove temporary clang format config file');
-  }
+    try {
+      await fs.remove(path.join(tmpDir.path, '.clang-format'));
+    } catch (err) {
+      console.error('Failed to remove temporary clang format config file');
+    }
 
-  try {
-    tmpDir.cleanup();
+    try {
+      tmpDir.cleanup();
+    } catch (err) {
+      console.error('Failed to cleanup temporary directory');
+    }
+
+    return resultList;
   } catch (err) {
-    console.error('Failed to cleanup temporary directory');
+    console.error(err);
   }
-  return resultList;
 }
 
 if (require.main === module) {
