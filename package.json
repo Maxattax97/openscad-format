@@ -1,6 +1,6 @@
 {
   "name": "openscad-format",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "An opinionated formatter for the OpenSCAD language.",
   "main": "./index.js",
   "bin": {
