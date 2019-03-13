@@ -9,9 +9,8 @@
   "scripts": {
     "lint": "eslint .",
     "fix": "eslint . --fix",
-    "cmd": "node index.js",
     "test": "mocha",
-    "demo": "node index.js -i source.scad"
+    "all": "eslint . --fix && mocha"
   },
   "repository": {
     "type": "git",

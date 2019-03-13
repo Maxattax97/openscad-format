@@ -16,13 +16,13 @@ const { argv } = require('yargs')
   .example('$0 -i \'./**/*.scad\'', 'Formats all *.scad files recursively and writes them to their respective files')
   .alias('i', 'input')
   .nargs('i', 1)
-  .describe('i', 'Input file to read, file globs allowed (qoutes recommended)')
+  .describe('i', 'Input file to read, file globs allowed (quotes recommended)')
   .alias('o', 'output')
   .nargs('o', 1)
   .describe('o', 'Output file to write')
   .help('h')
   .alias('h', 'help')
-  .epilog('This utility requies clang-format, but this is automatically installed for most platforms.');
+  .epilog('This utility requires clang-format, but this is automatically installed for most platforms.');
 
 tmp.setGracefulCleanup();
 
@@ -141,6 +141,7 @@ async function format(str, tmpDir) {
     return result;
   } catch (err) {
     console.error('Failure while formatting with Clang', err);
+    throw err;
   }
 }
 
@@ -156,7 +157,8 @@ async function feed(input, output, tmpDir) {
   str = str.toString();
 
   if (!str) {
-    console.warn(`Contents of ${input} is empty; skipping ...`);
+    // Do not write to output since we sometimes use stdout.
+    // console.warn(`Contents of ${input} is empty; skipping ...`);
     return '';
   }
 
@@ -178,6 +180,7 @@ async function feed(input, output, tmpDir) {
     throw new Error('Failed to format content string');
   } catch (err) {
     console.error('Failed to feed to formatter and write output', err);
+    throw err;
   }
 }
 
@@ -247,9 +250,11 @@ async function main(input, output) {
       return resultList;
     } catch (err) {
       console.error(err);
+      throw err;
     }
   } catch (err) {
     console.error(err);
+    throw err;
   }
 }
 
