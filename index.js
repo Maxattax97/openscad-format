@@ -20,6 +20,12 @@ const { argv } = require('yargs')
   .alias('o', 'output')
   .nargs('o', 1)
   .describe('o', 'Output file to write')
+  .alias('f', 'force')
+  .nargs('f', 1)
+  .describe('f', 'Forcibly overwrite the source file')
+  .alias('d', 'dry')
+  .nargs('d', 1)
+  .describe('d', 'Perform a dry run, without writing')
   .help('h')
   .alias('h', 'help')
   .epilog('This utility requires clang-format, but this is automatically installed for most platforms.');
@@ -193,18 +199,20 @@ async function main(input, output) {
     argv.output = output;
   }
 
-  try {
-    argv.input = await globby(argv.input, {
-      deep: true,
-      gitignore: true,
-    });
-  } catch (err) {
-    console.error(`Failed to glob input using ${argv.input}`, err);
+  if (argv.input) {
+    try {
+      argv.input = await globby(argv.input, {
+        deep: true,
+        gitignore: true,
+      });
+    } catch (err) {
+      console.error(`Failed to glob input using ${argv.input}`, err);
+    }
   }
 
-  if (argv.input.length > 1) {
+  if (argv.input && argv.input.length > 1) {
     argv.output = null;
-  } else if (!argv.output && argv.input.length === 1) {
+  } else if (!argv.output && argv.input && argv.input.length === 1) {
     argv.output = argv.input;
   }
 
