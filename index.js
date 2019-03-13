@@ -13,23 +13,25 @@ const { argv } = require('yargs')
   .example('$0 < input.scad > output.scad', 'Formats input.scad and saves it as output.scad')
   .example('$0 < input.scad', 'Formats input.scad and writes to stdout')
   .example('cat input.scad | $0 | less', 'Formats input.scad and displays in less')
-  .example('$0 -i ./**/*', 'Formats all *.scad files and writes them to their respective files')
+  .example('$0 -i \'./**/*.scad\'', 'Formats all *.scad files recursively and writes them to their respective files')
   .alias('i', 'input')
   .nargs('i', 1)
-  .describe('i', 'Input file to read')
+  .describe('i', 'Input file to read, file globs allowed (qoutes recommended)')
   .alias('o', 'output')
   .nargs('o', 1)
   .describe('o', 'Output file to write')
   .help('h')
   .alias('h', 'help')
-  .epilog('This utility requires clang and openscad to be installed.');
+  .epilog('This utility requies clang-format, but this is automatically installed for most platforms.');
 
 tmp.setGracefulCleanup();
 
 async function convertIncludesToClang(str) {
   // eslint-disable-next-line no-useless-escape
   const regex = /^\s*(include|use)\s*<([\.\w\/]*)>\s*$/gm;
-  const backup = []; // {type: 'include' | 'use', path: 'cornucopia/../source.scad'}
+
+  // {type: 'include' | 'use', path: 'cornucopia/../source.scad'}
+  const backup = [];
   let matches = regex.exec(str);
 
   while (matches !== null) {
@@ -60,6 +62,7 @@ async function convertIncludesToClang(str) {
     // Use include since we're converting to Clang.
     newIncludes.push(`#include <${item.path}>\n`);
   });
+  newIncludes.push('\n'); // Add a newline to separate the includes from source.
   newIncludes.push(updated);
 
   return { str: newIncludes.join(''), backup };
@@ -190,10 +193,6 @@ async function main(input, output) {
   try {
     argv.input = await globby(argv.input, {
       deep: true,
-      // expandDirectories: {
-      //   files: ['*.scad'],
-      //   extensions: ['scad'],
-      // },
       gitignore: true,
     });
   } catch (err) {
