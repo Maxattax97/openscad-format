@@ -2,6 +2,7 @@
 /* eslint-disable no-console */
 const fs = require('fs-extra');
 const getStdin = require('get-stdin');
+const assert = require('assert');
 const globby = require('globby');
 const clangFormat = require('clang-format');
 const tmp = require('tmp-promise');
@@ -108,9 +109,11 @@ async function format(str, tmpDir) {
     });
   }
 
-  const clangConversionResult = await convertIncludesToClang(str);
-
   try {
+    assert(str);
+    const clangConversionResult = await convertIncludesToClang(str);
+    assert(clangConversionResult.str);
+
     const { path: tmpFilePath, cleanup: cleanupTmpFile } = await tmp.file({ dir: tmpDir.path, postfix: '.scad' });
 
     const virtualFile = {
@@ -119,20 +122,22 @@ async function format(str, tmpDir) {
     await fs.writeFile(virtualFile.path, clangConversionResult.str);
 
     let result = await getClangFormattedString(virtualFile);
+    assert(result);
 
     result = await convertIncludesToScad(result, clangConversionResult.backup);
+    assert(result);
 
     try {
       await fs.remove(virtualFile.path);
     } catch (err) {
-      console.error('Failed to remove temporary input file');
+      console.error('Failed to remove temporary input file', err);
     }
 
     cleanupTmpFile();
 
     return result;
   } catch (err) {
-    console.error(err);
+    console.error('Failure while formatting with Clang', err);
   }
 }
 
@@ -146,6 +151,11 @@ async function feed(input, output, tmpDir) {
   }
 
   str = str.toString();
+
+  if (!str) {
+    console.warn(`Contents of ${input} is empty; skipping ...`);
+    return '';
+  }
 
   try {
     const result = await format(str, tmpDir);
@@ -164,7 +174,7 @@ async function feed(input, output, tmpDir) {
 
     throw new Error('Failed to format content string');
   } catch (err) {
-    console.error(err);
+    console.error('Failed to feed to formatter and write output', err);
   }
 }
 
@@ -187,7 +197,7 @@ async function main(input, output) {
       gitignore: true,
     });
   } catch (err) {
-    console.error(err, argv.input);
+    console.error(`Failed to glob input using ${argv.input}`, err);
   }
 
   if (argv.input.length > 1) {
@@ -210,7 +220,7 @@ async function main(input, output) {
             const result = await feed(file, argv.output, tmpDir);
             resultList.push({ source: file, formatted: result });
           } catch (err) {
-            console.error(err);
+            console.error('Failed to feed input files', err);
           }
         }));
       } else {
@@ -219,7 +229,7 @@ async function main(input, output) {
           const result = await feed(null, argv.output, tmpDir);
           resultList.push({ source: 'stdin', formatted: result });
         } catch (err) {
-          console.error(err);
+          console.error('Failed to feed stdin', err);
         }
       }
 
