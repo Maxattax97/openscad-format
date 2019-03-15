@@ -10,6 +10,7 @@
     "lint": "eslint .",
     "fix": "eslint . --fix",
     "test": "mocha",
+    "reset-clean": "./index.js -i ./test/dirty/*.scad -o ./test/clean/",
     "all": "eslint . --fix && mocha"
   },
   "repository": {
@@ -30,6 +31,7 @@
   "homepage": "https://github.com/Maxattax97/openscad-format#readme",
   "dependencies": {
     "clang-format": "^1.2.4",
+    "diff-match-patch": "^1.0.4",
     "fs-extra": "^7.0.1",
     "get-stdin": "^6.0.0",
     "globby": "^9.1.0",

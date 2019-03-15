@@ -7,7 +7,8 @@ const globby = require('globby');
 const clangFormat = require('clang-format');
 const tmp = require('tmp-promise');
 const path = require('path');
-const { argv } = require('yargs')
+
+let { argv } = require('yargs')
   .usage('Usage: $0 [options]')
   .example('$0 -i input.scad -o output.scad', 'Formats input.scad and saves it as output.scad')
   .example('$0 < input.scad > output.scad', 'Formats input.scad and saves it as output.scad')
@@ -17,30 +18,34 @@ const { argv } = require('yargs')
   .alias('i', 'input')
   .nargs('i', 1)
   .describe('i', 'Input file to read, file globs allowed (quotes recommended)')
+  .string('i') // We parse this path ourselves (might have wildcards).
   .alias('o', 'output')
   .nargs('o', 1)
   .describe('o', 'Output file to write')
-  .alias('f', 'force')
-  .nargs('f', 1)
-  .describe('f', 'Forcibly overwrite the source file')
+  .normalize('o') // Normalizes to a path.
   .alias('c', 'config')
   .nargs('c', 1)
-  .describe('c', 'Use the specified config using the .clang-format style file')
+  .describe('c', 'Use the specified path to a config using the .clang-format style file')
+  .normalize('c') // Normalizes to a path.
   .alias('j', 'javadoc')
-  .nargs('j', 1)
+  .boolean('j')
   .describe('j', 'Automatically add {Java,JS}doc-style comment templates to functions and modules where missing')
+  .alias('f', 'force')
+  .boolean('f')
+  .describe('f', 'Forcibly overwrite (or "fix") the source file')
   .alias('d', 'dry')
-  .nargs('d', 1)
+  .boolean('d')
   .describe('d', 'Perform a dry run, without writing')
   .help('h')
   .alias('h', 'help')
   .epilog('This utility requires clang-format, but this is automatically installed for most platforms.');
+  // .default(argsDefault)
 
 tmp.setGracefulCleanup();
 
 async function convertIncludesToClang(str) {
   // eslint-disable-next-line no-useless-escape
-  const regex = /^\s*(include|use)\s*<([-\.\w\/]*)>\s*$/gm;
+  const regex = /^\s*(include|use)\s*<([_\-\.\w\/]*)>;{0,1}\s*$/gm;
 
   // {type: 'include' | 'use', path: 'cornucopia/../source.scad'}
   const backup = [];
@@ -70,12 +75,16 @@ async function convertIncludesToClang(str) {
     matches = regex.exec(str);
   }
 
-  return { str: updated, backup };
+  return { result: updated, backup };
+}
+
+async function addDocumentation(str) {
+  return str;
 }
 
 async function convertIncludesToScad(str, backup) {
   // eslint-disable-next-line no-useless-escape
-  const regex = /^\s*#include\s*<([-\.\w\/]*)>\s*$/gmi;
+  const regex = /^\s*#include\s*<([_\-\.\w\/]*)>;{0,1}\s*$/gmi;
   let fixed = str;
   let matches = regex.exec(str);
 
@@ -125,22 +134,29 @@ async function format(str, tmpDir) {
   }
 
   try {
-    assert(str);
-    const clangConversionResult = await convertIncludesToClang(str);
-    assert(clangConversionResult.str);
+    assert(str, 'Did not receive string to format');
+
+    // eslint-disable-next-line prefer-const
+    let { result, backup } = await convertIncludesToClang(str);
+    assert(result, 'Failed to convert OpenSCAD includes to Clang includes');
+
+    if (argv.javadoc) {
+      result = await addDocumentation(result);
+      assert(result, 'Javadoc failed to format source');
+    }
 
     const { path: tmpFilePath, cleanup: cleanupTmpFile } = await tmp.file({ dir: tmpDir.path, postfix: '.scad' });
 
     const virtualFile = {
       path: tmpFilePath,
     };
-    await fs.writeFile(virtualFile.path, clangConversionResult.str);
+    await fs.writeFile(virtualFile.path, result);
 
-    let result = await getClangFormattedString(virtualFile);
-    assert(result);
+    result = await getClangFormattedString(virtualFile);
+    assert(result, 'Clang failed to format source');
 
-    result = await convertIncludesToScad(result, clangConversionResult.backup);
-    assert(result);
+    result = await convertIncludesToScad(result, backup);
+    assert(result, 'Failed to convert Clang includes to OpenSCAD includes');
 
     try {
       await fs.remove(virtualFile.path);
@@ -178,12 +194,14 @@ async function feed(input, output, tmpDir) {
     const result = await format(str, tmpDir);
 
     if (result) {
-      if (output) {
+      if (!argv.dry && output && argv.input && argv.input.length > 1) {
+        await fs.outputFile(path.join(argv.output, path.basename(input)), result);
+      } else if (!argv.dry && output) {
         await fs.writeFile(output, result);
-      } else if (input && argv.isCLI) {
+      } else if (!argv.dry && argv.force && input) {
         // Write it back to the source location.
         await fs.writeFile(input, result);
-      } else if (argv.isCLI) {
+      } else if (argv.dry && argv.isCLI) {
         process.stdout.write(result);
       }
       return result;
@@ -196,13 +214,9 @@ async function feed(input, output, tmpDir) {
   }
 }
 
-async function main(input, output) {
-  if (input) {
-    argv.input = input;
-  }
-
-  if (output) {
-    argv.output = output;
+async function main(params) {
+  if (params) {
+    argv = params;
   }
 
   if (argv.input) {
@@ -217,7 +231,9 @@ async function main(input, output) {
   }
 
   if (argv.input && argv.input.length > 1) {
-    argv.output = null;
+    await fs.ensureDir(argv.output);
+  } else if (argv.input && argv.input.length === 1) {
+    await fs.ensureFile(argv.output);
   } else if (!argv.output && argv.input && argv.input.length === 1) {
     argv.output = argv.input;
   }
@@ -228,7 +244,11 @@ async function main(input, output) {
     const tmpDir = await tmp.dir({ unsafeCleanup: true });
 
     try {
-      await fs.copy(path.join(__dirname, '.clang-format'), path.join(tmpDir.path, '.clang-format'));
+      if (argv.config) {
+        await fs.copy(argv.config, path.join(tmpDir.path, '.clang-format'));
+      } else {
+        await fs.copy(path.join(__dirname, '.clang-format'), path.join(tmpDir.path, '.clang-format'));
+      }
 
       if (argv.input) {
         await Promise.all(argv.input.map(async (file) => {
