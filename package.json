@@ -10,7 +10,7 @@
     "lint": "eslint .",
     "fix": "eslint . --fix",
     "test": "mocha",
-    "reset-clean": "./index.js -i ./test/dirty/*.scad -o ./test/clean/",
+    "reset-clean": "./index.js -i './test/dirty/*.scad' -o ./test/clean/",
     "all": "eslint . --fix && mocha"
   },
   "repository": {

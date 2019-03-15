@@ -230,12 +230,14 @@ async function main(params) {
     }
   }
 
-  if (argv.input && argv.input.length > 1) {
-    await fs.ensureDir(argv.output);
-  } else if (argv.input && argv.input.length === 1) {
-    await fs.ensureFile(argv.output);
-  } else if (!argv.output && argv.input && argv.input.length === 1) {
-    argv.output = argv.input;
+  try {
+    if (argv.output && argv.input && argv.input.length > 1) {
+      await fs.ensureDir(argv.output);
+    } else if (argv.output && argv.input && argv.input.length === 1) {
+      await fs.ensureFile(argv.output);
+    }
+  } catch (err) {
+    console.error('Failure while ensuring proper output pathing', err);
   }
 
   const resultList = [];
