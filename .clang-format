@@ -1,7 +1,7 @@
 ---
 BasedOnStyle: Mozilla
 ColumnLimit: 80
-SortIncludes: true
+# SortIncludes: true
 IndentWidth: 4
 AccessModifierOffset: -4
 ContinuationIndentWidth: 4

@@ -23,6 +23,12 @@ const { argv } = require('yargs')
   .alias('f', 'force')
   .nargs('f', 1)
   .describe('f', 'Forcibly overwrite the source file')
+  .alias('c', 'config')
+  .nargs('c', 1)
+  .describe('c', 'Use the specified config using the .clang-format style file')
+  .alias('j', 'javadoc')
+  .nargs('j', 1)
+  .describe('j', 'Automatically add {Java,JS}doc-style comment templates to functions and modules where missing')
   .alias('d', 'dry')
   .nargs('d', 1)
   .describe('d', 'Perform a dry run, without writing')
@@ -34,11 +40,12 @@ tmp.setGracefulCleanup();
 
 async function convertIncludesToClang(str) {
   // eslint-disable-next-line no-useless-escape
-  const regex = /^\s*(include|use)\s*<([\.\w\/]*)>\s*$/gm;
+  const regex = /^\s*(include|use)\s*<([-\.\w\/]*)>\s*$/gm;
 
   // {type: 'include' | 'use', path: 'cornucopia/../source.scad'}
   const backup = [];
   let matches = regex.exec(str);
+  let updated = str;
 
   while (matches !== null) {
     if (matches.index === regex.lastIndex) {
@@ -50,10 +57,12 @@ async function convertIncludesToClang(str) {
     matches.forEach((match, groupIndex) => {
       if (groupIndex === 0) {
         entry = {};
+        entry.full = match;
       } else if (groupIndex === 1) {
         entry.type = match;
       } else if (groupIndex === 2) {
         entry.path = match;
+        updated = updated.replace(entry.full.trim(), `#include <${entry.path}>`);
         backup.push(entry);
       }
     });
@@ -61,22 +70,12 @@ async function convertIncludesToClang(str) {
     matches = regex.exec(str);
   }
 
-  const updated = str.replace(regex, '');
-
-  const newIncludes = [];
-  backup.forEach((item) => {
-    // Use include since we're converting to Clang.
-    newIncludes.push(`#include <${item.path}>\n`);
-  });
-  newIncludes.push('\n'); // Add a newline to separate the includes from source.
-  newIncludes.push(updated);
-
-  return { str: newIncludes.join(''), backup };
+  return { str: updated, backup };
 }
 
 async function convertIncludesToScad(str, backup) {
   // eslint-disable-next-line no-useless-escape
-  const regex = /^\s*#include\s*<([\.\w\/]*)>\s*$/gmi;
+  const regex = /^\s*#include\s*<([-\.\w\/]*)>\s*$/gmi;
   let fixed = str;
   let matches = regex.exec(str);
 
@@ -92,11 +91,18 @@ async function convertIncludesToScad(str, backup) {
         entry = { full: match };
       } else if (groupIndex === 1) {
         entry.path = match;
-        backup.forEach((item) => {
-          if (item.path === entry.path) {
-            fixed = fixed.replace(entry.full, `${item.type} <${item.path}>`);
+
+        // Must traverse in order.
+        for (let i = 0; i < backup.length; i += 1) {
+          if (backup[i].path === entry.path) {
+            // Replace only _a single occurance_.
+            fixed = fixed.replace(new RegExp(entry.full.trim(), ''), `${backup[i].type} <${backup[i].path}>`, '');
+
+            // Splice out the one we just performed.
+            backup.splice(i, 1);
+            break;
           }
-        });
+        }
       }
     });
 

@@ -1,6 +1,11 @@
-include <cornucopia/util/constants.scad>
 include <cornucopia/util/math.scad>
 include <cornucopia/util/measures/imperial.scad>
+use <cornucopia/util/vector.scad>
+
+include <cornucopia/util/constants.scad>
+
+use <cornucopia/util/constants.scad>
+
 // This file is placed under the public domain
 
 // from: http://www.thingiverse.com/thing:9512
@@ -193,9 +198,9 @@ module block(width,
                         translate([
                             xcount * knob_spacing,
                             ycount * knob_spacing,
-                            -roof_thickness / 2
+                            -,roof_thickness / 2
                         ]) cylinder(r = knob_diameter / 2,
-     ,                               h = height * block_height + roof_thickness,
+                                    h = height * block_height + roof_thickness,
                                     $fs = cylinder_precision);
             }
         // posts:

@@ -1,9 +1,11 @@
 include <cornucopia/util/math.scad>
 include <cornucopia/util/measures/imperial.scad>
-
+use <cornucopia/util/vector.scad>
 
 include <cornucopia/util/constants.scad>
+
 use <cornucopia/util/constants.scad>
+
 
 // This file is placed under the public domain
 
