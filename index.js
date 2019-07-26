@@ -26,7 +26,7 @@ let { argv } = require('yargs')
   .normalize('o') // Normalizes to a path.
   .alias('c', 'config')
   .nargs('c', 1)
-  .describe('c', 'Use the specified path to a config using the .clang-format style file')
+  .describe('c', 'Use the specified path to a config using the .openscad-format style file')
   .normalize('c') // Normalizes to a path.
   .alias('j', 'javadoc')
   .boolean('j')

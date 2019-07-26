@@ -1,9 +1,6 @@
 # openscad-format
 A source code formatter for the OpenSCAD language.
 
-Currently it's opinionated, but there may be improvements in the future which
-allow you to alter the code style it enforces.
-
 ## Install
 The utility is available on [npm](https://www.npmjs.com/package/openscad-format), you can install it like so:
 ```
