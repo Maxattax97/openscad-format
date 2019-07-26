@@ -7,6 +7,7 @@ const globby = require('globby');
 const clangFormat = require('clang-format');
 const tmp = require('tmp-promise');
 const path = require('path');
+const find = require('find-file-recursively-up');
 
 let { argv } = require('yargs')
   .usage('Usage: $0 [options]')
@@ -214,6 +215,23 @@ async function feed(input, output, tmpDir) {
   }
 }
 
+async function findFormatFile() {
+  return new Promise((resolve, reject) => {
+    find('.openscad-format', (err, foundPath) => {
+      if (err) {
+        reject(err);
+        return;
+      }
+
+      if (foundPath) {
+        resolve(foundPath);
+      } else {
+        reject(new Error('unable to find .openscad-format'));
+      }
+    });
+  });
+}
+
 async function main(params) {
   if (params) {
     argv = params;
@@ -249,7 +267,18 @@ async function main(params) {
       if (argv.config) {
         await fs.copy(argv.config, path.join(tmpDir.path, '.clang-format'));
       } else {
-        await fs.copy(path.join(__dirname, '.clang-format'), path.join(tmpDir.path, '.clang-format'));
+        let foundConfig;
+        try {
+          foundConfig = await findFormatFile();
+        } catch (e) {
+          foundConfig = undefined;
+        }
+
+        if (foundConfig) {
+          await fs.copy(foundConfig, path.join(tmpDir.path, '.clang-format'));
+        } else {
+          await fs.copy(path.join(__dirname, '.openscad-format'), path.join(tmpDir.path, '.clang-format'));
+        }
       }
 
       if (argv.input) {

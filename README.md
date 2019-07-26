@@ -23,7 +23,7 @@ Options:
   -i, --input    Input file to read, file globs allowed (quotes recommended)
                                                                         [string]
   -o, --output   Output file to write                                   [string]
-  -c, --config   Use the specified path to a config using the .clang-format
+  -c, --config   Use the specified path to a config using the .openscad-format
                  style file                                             [string]
   -j, --javadoc  Automatically add {Java,JS}doc-style comment templates to
                  functions and modules where missing                   [boolean]
@@ -47,6 +47,16 @@ Examples:
 This utility requires clang-format, but this is automatically installed for most
 platforms.
 ```
+## Configuration
+This utility by default will search for the configuration file .openscad-format in one of the parent directories. If none is found it will fall back to the default.
+
+The format used is identical to that of clang-format, the easiest way to create the .openscad-format file is using clang-format.
+
+```
+clang-format -style=llvm -dump-config > .openscad-format
+```
+
+See the clang-format docs for the full list of options. At the time of writing this the current styles supported are: LLVM, Google, Chromium, Mozilla, andWebKit.
 
 ## Contribute
 Make sure your PR's pass the unit tests and are free of ESLint errors. To check,
