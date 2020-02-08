@@ -126,8 +126,12 @@ async function format(str, tmpDir) {
   function getClangFormattedString(file) {
     return new Promise((resolve, reject) => {
       const result = [];
-      clangFormat(file, 'utf-8', 'file', () => {
-        resolve(result.join());
+      clangFormat(file, 'utf-8', 'file', (err) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(result.join());
+        }
       })
         .on('data', buffer => result.push(buffer.toString()))
         .on('err', err => reject(err));
@@ -169,8 +173,12 @@ async function format(str, tmpDir) {
 
     return result;
   } catch (err) {
-    console.error('Failure while formatting with Clang', err);
-    throw err;
+    if (err.message.indexOf('clang-format exited with exit code 1.') >= 0) {
+      throw new Error('Syntax error in .openscad-format (Clang failed to parse it)');
+    } else {
+      console.error('Failure while formatting with Clang', err);
+      throw err;
+    }
   }
 }
 

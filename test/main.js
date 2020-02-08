@@ -17,6 +17,19 @@ describe('Main', () => {
       expect(result[0].formatted).to.equal(correct);
     });
   });
+  describe('cases', () => {
+    it('should format walkytalky.scad', async () => {
+      const result = await format({ dry: true, input: './test/dirty/walkytalky.scad' });
+      let correct = await fs.readFile('./test/clean/walkytalky.scad');
+      correct = correct.toString();
+      expect(result).to.be.a('array');
+      expect(result[0]).to.be.a(typeof {});
+      expect(result[0].source).to.be.a(typeof '');
+      expect(result[0].formatted).to.be.a(typeof '');
+      expect(result[0].source).to.equal('./test/dirty/walkytalky.scad');
+      expect(result[0].formatted).to.equal(correct);
+    });
+  });
   describe('custom configurations', () => {
     it('should follow the Google style', async () => {
       const result = await format({ dry: true, input: './test/dirty/integration-basic.scad', config: './test/configs/google-style' });
